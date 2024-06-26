@@ -1,27 +1,30 @@
-unless ARGV.size > 0
+if ARGV.empty?
   puts "  Missing executable file argument"
-  puts "  Usage (in a Dockerfile)"
-  puts "  RUN crystal run ./path/to/list-deps.cr -- ./bin/executable"
+  puts "  Usage (in a Dockerfile):"
+  puts "  RUN ruby ./path/to/list_deps.rb ./bin/executable"
   exit 1
 end
 
 executable = File.expand_path(ARGV[0])
 
-unless File.exists?(executable)
+unless File.exist?(executable)
   puts "  Unable to find #{executable}"
   exit 1
 end
 
 puts "  Extracting libraries for #{executable} ..."
 
-deps = [] of String
-output = `ldd #{executable}`.scan(/(\/.*)\s\(/) do |m|
-  library = m[1]
+deps = []
+output = %x{ldd #{executable}}
+output.scan(/(\/.*)\s\(/) do |match|
+  library = match[0]
   deps << library
 
-  real_lib = File.real_path(library)
+  real_lib = File.realpath(library)
   deps << real_lib if real_lib != library
 end
+
+deps.uniq! # Remove duplicates
 
 puts "  Generating Dockerfile"
 puts

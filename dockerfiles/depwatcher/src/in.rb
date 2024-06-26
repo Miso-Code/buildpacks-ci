@@ -2,14 +2,14 @@ require "./depwatcher/*"
 require "json"
 
 dir = ARGV[0]
-data = JSON.parse(STDIN)
-STDERR.puts data.to_json
+data = JSON.parse($stdin.read)
+$stderr.puts data.to_json
 source = data["source"]
 version = data["version"]
 
 case type = source["type"].to_s
 when "github_releases"
-  version = if source["fetch_source"]? == JSON.parse("true")
+  version = if source["fetch_source"] == JSON.parse("true")
               Depwatcher::GithubReleases.new.in(source["repo"].to_s, version["ref"].to_s, dir)
             else
               Depwatcher::GithubReleases.new.in(source["repo"].to_s, source["extension"].to_s, version["ref"].to_s, dir)
@@ -72,7 +72,7 @@ end
 
 if version
   File.write("#{dir}/data.json", {source: source, version: version}.to_json)
-  STDERR.puts version.to_json
+  $stderr.puts version.to_json
   puts({version: data["version"]}.to_json)
 else
   raise "Unable to retrieve version:\n#{data}"
